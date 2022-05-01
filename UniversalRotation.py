@@ -8,7 +8,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 @xw.func
-def get_fund_net_asset_value_history(fund_code: str, pz: int = 40000) -> pd.DataFrame:
+def get_fund_net_asset_value_history(fund_code: str, pz: int = 30) -> pd.DataFrame:
     '''
     根据基金代码和要获取的页码抓取基金净值信息
 
@@ -23,34 +23,34 @@ def get_fund_net_asset_value_history(fund_code: str, pz: int = 40000) -> pd.Data
     '''
     # 请求头
     EastmoneyFundHeaders = {
-        'User-Agent': 'EMProjJijin/6.2.8 (iPhone; iOS 13.6; Scale/2.00)',
-        'GTOKEN': '98B423068C1F4DEF9842F82ADF08C5db',
-        'clientInfo': 'ttjj-iPhone10,1-iOS-iOS13.6',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Host': 'fundmobapi.eastmoney.com',
-        'Referer': 'https://mpservice.com/516939c37bdb4ba2b1138c50cf69a2e1/release/pages/FundHistoryNetWorth',
+        'Accept': '*/*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        # 'Connection': 'keep-alive',
+        'Host': 'api.fund.eastmoney.com',
+        'Referer': 'http://fundf10.eastmoney.com/',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36',
     }
     # 请求参数
-    data = {
-        'FCODE': f'{fund_code}',
-        'appType': 'ttjj',
-        'cToken': '1',
-        'deviceid': '1',
+    Eastmoneyparams = {
+        'fundCode': f'{fund_code}',
         'pageIndex': '1',
         'pageSize': f'{pz}',
-        'plat': 'Iphone',
-        'product': 'EFund',
-        'serverVersion': '6.2.8',
-        'version': '6.2.8'
+        'startDate': '',
+        'endDate': '',
+        '_': round(time.time()*1000),
     }
-    url = 'https://fundmobapi.eastmoney.com/FundMNewApi/FundMNHisNetList'
+    EastmoneyCookie = {
+        'qgqp_b_id': "e1dc92ae3b0d76cc57233f6d6a1c5c61",
+    }
+    url = 'https://api.fund.eastmoney.com/f10/lsjz'
 
     #设置重连次数
-    requests.adapters.DEFAULT_RETRIES = 5
+    requests.adapters.DEFAULT_RETRIES = 10
     session1 = requests.session()
     # 设置连接活跃状态为False
     session1.keep_alive = False
-    response1 = session1.get(url, headers=EastmoneyFundHeaders, data=data, verify=False, stream=False, timeout=10)
+    response1 = session1.get(url, headers=EastmoneyFundHeaders, params=Eastmoneyparams, cookies=EastmoneyCookie, verify=False, stream=False, timeout=10)
     json_response = response1.json()
     response1.close()
     del(response1)
@@ -59,24 +59,22 @@ def get_fund_net_asset_value_history(fund_code: str, pz: int = 40000) -> pd.Data
     columns = ['日期', '单位净值', '累计净值', '涨跌幅']
     if json_response is None:
         return pd.DataFrame(rows, columns=columns)
-    datas = json_response['Datas']
+    datas = json_response['Data']['LSJZList']
     if len(datas) == 0:
         return pd.DataFrame(rows, columns=columns)
     for stock in datas:
-        date = stock['FSRQ']
         rows.append({
-            '日期': date,
+            '日期': stock['FSRQ'],
             '单位净值': stock['DWJZ'],
             '累计净值': stock['LJJZ'],
             '涨跌幅': stock['JZZZL']
         })
 
     df = pd.DataFrame(rows)
-    df['单位净值'] = pd.to_numeric(df['单位净值'], errors='coerce')
-
-    df['累计净值'] = pd.to_numeric(df['累计净值'], errors='coerce')
-
     df['日期'] = pd.to_datetime(df['日期'], errors='coerce')
+    df['单位净值'] = pd.to_numeric(df['单位净值'], errors='coerce')
+    df['累计净值'] = pd.to_numeric(df['累计净值'], errors='coerce')
+    df['涨跌幅'] = pd.to_numeric(df['涨跌幅'], errors='coerce')
     return df
 
 @xw.func
@@ -112,7 +110,7 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, source
         fundPremiumRateValue = get_fund_premium_rate(fund_code)
         data_fund.loc[i, '溢价率'] = fundPremiumRateValue
         # 延时
-        if (i % 30 == 0) :
+        if (i % 10 == 0) :
             time.sleep(random.randrange(delay))
 
         netAssetValue = get_fund_net_asset_value_history(fund_code[2:8])
@@ -167,15 +165,15 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, source
 # 轮动20天净值增长和溢价率选LOF、ETF和封基
 def rotate_LOF_ETF():
     print("------------------------20天净值增长率和溢价率轮动LOF、ETF和封基----------------------------------------------------")
-    # 数据区域为'F3:M865'
-    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动LOF、ETF和封基','F3:M865','E2', 10)
+    # 数据区域为'F3:M672'
+    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动LOF、ETF和封基','F3:M672','E2', 10)
 
 @xw.func
 # 轮动20天净增和溢价率选债券和境外基金
 def rotate_abroad_fund():
     print("-----------------------20天净值增长率和溢价率轮动债券和境外基金---------------------------------------------------------")
-    # 数据区域为'F3:M132'
-    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动债券和境外基金', 'F3:M132', 'E2', 10)
+    # 数据区域为'F3:M131'
+    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动债券和境外基金', 'F3:M131', 'E2', 10)
 
 def main():
 
