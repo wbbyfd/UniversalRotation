@@ -43,7 +43,7 @@ def get_fund_net_asset_value_history(fund_code: str, pz: int = 30) -> pd.DataFra
     EastmoneyCookie = {
         'qgqp_b_id': "e1dc92ae3b0d76cc57233f6d6a1c5c61",
     }
-    url = 'https://api.fund.eastmoney.com/f10/lsjz'
+    url = 'http://api.fund.eastmoney.com/f10/lsjz'
 
     #设置重连次数
     requests.adapters.DEFAULT_RETRIES = 10
@@ -97,7 +97,7 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, source
     wb = xw.Book.caller()  # wb = xw.Book(r'UniversalRotation.xlsm')
     pd.options.display.max_columns = None
     pd.options.display.max_rows = None
-    pysnowball.set_token('xq_a_token=7a84ec3929cd1e60abe21a2c26b9292767c1bd62;')
+    pysnowball.set_token('xq_a_token=e8119f7d7a050cdbfa822fa0da4de5bec1ee0dc7;')
 
     sheet_fund = wb.sheets[source_sheets]
     data_fund = pd.DataFrame(sheet_fund.range(source_range).value,
@@ -115,16 +115,19 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, source
 
         netAssetValue = get_fund_net_asset_value_history(fund_code[2:8])
         # 最新净值
-        netAssetValue1 = netAssetValue.loc[0][2]
+        netAssetDate1 = netAssetDate20 = str(netAssetValue.loc[0][0])[0:10]
+        netAssetValue1 = netAssetValue20 = netAssetValue.loc[0][2]
         # 20个交易日前的净值
-        netAssetValue20 = netAssetValue.loc[20][2]
+        if (len(netAssetValue) > 20) :
+            netAssetDate20 = str(netAssetValue.loc[20][0])[0:10]
+            netAssetValue20 = netAssetValue.loc[20][2]
         # 更新20天净值增长率
         netAssetValue20Rate = round((netAssetValue1 - netAssetValue20) / netAssetValue20 * 100, 2)
         data_fund.loc[i, '20天净值增长率'] = netAssetValue20Rate
 
         log_str = 'No.' + format(str(i), "<6") + fund_code + ':'+ format(data_fund.loc[i, '基金名称'], "<15") \
-                  + str(netAssetValue.loc[0][0])[0:10] + ':净值:' + format(str(netAssetValue1), "<10") \
-                  + str(netAssetValue.loc[20][0])[0:10] + ':净值:' + format(str(netAssetValue20), "<10") \
+                  + netAssetDate1 + ':净值:' + format(str(netAssetValue1), "<10") \
+                  + netAssetDate20 + ':净值:' + format(str(netAssetValue20), "<10") \
                   + '二十个交易日净值增长率:' + format(str(netAssetValue20Rate), "<10") + '溢价率:'+ format(str(fundPremiumRateValue), "<10")
         print(log_str)
         print(log_str, file=log_file)
@@ -165,8 +168,8 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, source
 # 轮动20天净值增长和溢价率选LOF、ETF和封基
 def rotate_LOF_ETF():
     print("------------------------20天净值增长率和溢价率轮动LOF、ETF和封基----------------------------------------------------")
-    # 数据区域为'F3:M672'
-    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动LOF、ETF和封基','F3:M672','E2', 10)
+    # 数据区域为'F3:M665'
+    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动LOF、ETF和封基','F3:M665','E2', 10)
 
 @xw.func
 # 轮动20天净增和溢价率选债券和境外基金
