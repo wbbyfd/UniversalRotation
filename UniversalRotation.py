@@ -97,7 +97,7 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, source
     wb = xw.Book.caller()  # wb = xw.Book(r'UniversalRotation.xlsm')
     pd.options.display.max_columns = None
     pd.options.display.max_rows = None
-    pysnowball.set_token('xq_a_token=e8119f7d7a050cdbfa822fa0da4de5bec1ee0dc7;')
+    pysnowball.set_token('xq_a_token=51ddfe307595ab69072629d1448ed7bfb5758743;')
 
     sheet_fund = wb.sheets[source_sheets]
     data_fund = pd.DataFrame(sheet_fund.range(source_range).value,
@@ -168,8 +168,8 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, source
 # 轮动20天净值增长和溢价率选LOF、ETF和封基
 def rotate_LOF_ETF():
     print("------------------------20天净值增长率和溢价率轮动LOF、ETF和封基----------------------------------------------------")
-    # 数据区域为'F3:M665'
-    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动LOF、ETF和封基','F3:M665','E2', 10)
+    # 数据区域为'F3:M536'
+    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动LOF、ETF和封基','F3:M536','E2', 10)
 
 @xw.func
 # 轮动20天净增和溢价率选债券和境外基金
@@ -179,7 +179,6 @@ def rotate_abroad_fund():
     rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动债券和境外基金', 'F3:M131', 'E2', 10)
 
 def main():
-
     #删除旧log
     for eachfile in os.listdir('./'):
         filename = os.path.join('./', eachfile)
