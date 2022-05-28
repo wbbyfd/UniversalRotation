@@ -78,12 +78,14 @@ def get_fund_net_asset_value_history(fund_code: str, pz: int = 30) -> pd.DataFra
     return df
 
 @xw.func
-# 获取基金溢价率
+# 获取基金溢价率、成交量
 def get_fund_premium_rate(fund_code: str):
     detail = pd.DataFrame(pysnowball.quote_detail(fund_code))
     row1=detail.loc["quote"]
-    col1=row1[0]["premium_rate"]
-    return col1
+    premium_rate1=row1[0]["premium_rate"]
+    amount1 = row1[0]["amount"]
+    amount1 = amount1/10000 if amount1 else 0
+    return premium_rate1,amount1
 
 @xw.func
 # 根据排名计算排名分(精确到小数点后2位)
@@ -91,8 +93,16 @@ def get_rank_value(length: int, rank: int):
     return round((length-rank)/length*100, 2)
 
 @xw.func
-# 根据20天净值增长率和溢价率来量化轮动基金
 def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, source_range: str, dest_range: str, delay: int):
+    '''
+    根据20天净值增长率和溢价率来量化轮动基金
+    Parameters
+    ----------
+    source_sheets : Excel里sheet名称
+    source_range : 基金数据库区域
+    dest_range : 写回Excel的区域
+    delay : 延时
+    '''
     xw.Book("UniversalRotation.xlsm").set_mock_caller()
     wb = xw.Book.caller()  # wb = xw.Book(r'UniversalRotation.xlsm')
     pd.options.display.max_columns = None
@@ -102,13 +112,14 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, source
     sheet_fund = wb.sheets[source_sheets]
     data_fund = pd.DataFrame(sheet_fund.range(source_range).value,
                                        columns=['基金代码','基金名称','投资种类','20天净值增长率','溢价率','总排名分',
-                                                '20天净值增长率_排名分','溢价率_排名分'])
+                                                '20天净值增长率排名分','溢价率排名分','成交额(万元)'])
     log_file = open('log-' + source_sheets + str(time.strftime("-%Y-%m-%d-%H-%M-%S", time.localtime())) + '.txt', 'a+')
 
     for i,fund_code in enumerate(data_fund['基金代码']):
-        # 更新溢价率
-        fundPremiumRateValue = get_fund_premium_rate(fund_code)
+        # 更新溢价率、成交额
+        fundPremiumRateValue,fundAmount = get_fund_premium_rate(fund_code)
         data_fund.loc[i, '溢价率'] = fundPremiumRateValue
+        data_fund.loc[i, '成交额(万元)'] = fundAmount
         # 延时
         if (i % 10 == 0) :
             time.sleep(random.randrange(delay))
@@ -128,28 +139,29 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, source
         log_str = 'No.' + format(str(i), "<6") + fund_code + ':'+ format(data_fund.loc[i, '基金名称'], "<15") \
                   + netAssetDate1 + ':净值:' + format(str(netAssetValue1), "<10") \
                   + netAssetDate20 + ':净值:' + format(str(netAssetValue20), "<10") \
-                  + '二十个交易日净值增长率:' + format(str(netAssetValue20Rate), "<10") + '溢价率:'+ format(str(fundPremiumRateValue), "<10")
+                  + '二十个交易日净值增长率:' + format(str(netAssetValue20Rate), "<10") \
+                  + '溢价率:'+ format(str(fundPremiumRateValue), "<10")
         print(log_str)
         print(log_str, file=log_file)
 
-    # 更新'溢价率_排名分'
+    # 更新'溢价率排名分'
     data_fund = data_fund.sort_values(by='溢价率', ascending=True)
     data_fund.reset_index(drop=True, inplace=True)
     for i,fundPremiumRateValue in enumerate(data_fund['溢价率']):
         # print('溢价率：' + str(fundPremiumRateValue))
-        data_fund.loc[i, '溢价率_排名分'] = get_rank_value(len(data_fund), i)
+        data_fund.loc[i, '溢价率排名分'] = get_rank_value(len(data_fund), i)
 
-    # 更新'20天净值增长率_排名分'
+    # 更新'20天净值增长率排名分'
     data_fund = data_fund.sort_values(by='20天净值增长率', ascending=False)
     data_fund.reset_index(drop=True, inplace=True)
     for i,netAssetValue in enumerate(data_fund['20天净值增长率']):
         # print('20天净值增长率：' + str(netAssetValue))
-        data_fund.loc[i, '20天净值增长率_排名分'] = get_rank_value(len(data_fund), i)
+        data_fund.loc[i, '20天净值增长率排名分'] = get_rank_value(len(data_fund), i)
 
     # 更新'总排名分'
     for i,sumValue in enumerate(data_fund['总排名分']):
-        data_fund.loc[i, '总排名分'] = data_fund.loc[i, '溢价率_排名分'] +\
-                                           data_fund.loc[i, '20天净值增长率_排名分']
+        data_fund.loc[i, '总排名分'] = data_fund.loc[i, '溢价率排名分'] +\
+                                           data_fund.loc[i, '20天净值增长率排名分']
         # print('总排名分'+str(data_fund.loc[i, '总排名分']))
     data_fund = data_fund.sort_values(by='总排名分', ascending=False)
     data_fund.reset_index(drop=True, inplace=True)
@@ -168,15 +180,13 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, source
 # 轮动20天净值增长和溢价率选LOF、ETF和封基
 def rotate_LOF_ETF():
     print("------------------------20天净值增长率和溢价率轮动LOF、ETF和封基----------------------------------------------------")
-    # 数据区域为'F3:M536'
-    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动LOF、ETF和封基','F3:M536','E2', 10)
+    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动LOF、ETF和封基','H2:P704','G1', 10)
 
 @xw.func
 # 轮动20天净增和溢价率选债券和境外基金
 def rotate_abroad_fund():
     print("-----------------------20天净值增长率和溢价率轮动债券和境外基金---------------------------------------------------------")
-    # 数据区域为'F3:M131'
-    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动债券和境外基金', 'F3:M131', 'E2', 10)
+    # rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动债券和境外基金', 'H2:P115', 'G1', 10)
 
 def main():
     #删除旧log
