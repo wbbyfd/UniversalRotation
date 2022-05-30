@@ -97,13 +97,12 @@ def get_rank_value(length: int, rank: int):
 
 
 @xw.func
-def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, source_range: str, dest_range: str, delay: int):
+def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, dest_range: str, delay: int):
     '''
     根据20天净值增长率和溢价率来量化轮动基金
     Parameters
     ----------
     source_sheets : Excel里sheet名称
-    source_range : 基金数据库区域
     dest_range : 写回Excel的区域
     delay : 延时
     '''
@@ -114,6 +113,8 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, source
     pysnowball.set_token('xq_a_token=93613ef2dc688245d6f2ef8b913d9525607d4717;')
 
     sheet_fund = wb.sheets[source_sheets]
+    source_range = 'H2:P' + str(sheet_fund.used_range.last_cell.row)
+    print('数据表范围：' + source_range)
     data_fund = pd.DataFrame(sheet_fund.range(source_range).value,
                                        columns=['基金代码','基金名称','投资种类','20天净值增长率','溢价率','总排名分',
                                                 '20天净值增长率排名分','溢价率排名分','成交额(万元)'])
@@ -184,20 +185,20 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, source
 # 轮动20天净值增长和溢价率选LOF、ETF和封基
 def rotate_LOF_ETF():
     print("------------------------20天净值增长率和溢价率轮动LOF、ETF和封基-------------------------------------------------")
-    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动LOF、ETF和封基','H2:P704','G1', 10)
+    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动LOF、ETF和封基','G1', 10)
 
 
 @xw.func
 # 轮动20天净增和溢价率选债券和境外基金
 def rotate_abroad_fund():
     print("-----------------------20天净值增长率和溢价率轮动债券和境外基金---------------------------------------------------")
-    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动债券和境外基金', 'H2:P115', 'G1', 10)
+    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动债券和境外基金', 'G1', 10)
 
 
 @xw.func
-# 更新可转债实时数据：价格、溢价率、双低值、剩余规模、税前收益、剩余年限、到期时间、转股价值、成交金额等
+# 更新可转债实时数据：价格、涨跌幅、转股价、转股价值、溢价率、双低值、到期时间、剩余年限、剩余规模、成交金额、换手率、税前收益、振幅等
 def refresh_convertible_bond():
-    print("----------更新可转债实时数据：价格、溢价率、双低值、剩余规模、税前收益、剩余年限、到期时间、转股价值、成交金额等-------------")
+    print("更新可转债实时数据：价格、涨跌幅、转股价、转股价值、溢价率、双低值、到期时间、剩余年限、剩余规模、成交金额、换手率、税前收益、振幅等")
     xw.Book("UniversalRotation.xlsm").set_mock_caller()
     wb = xw.Book.caller()
     pd.options.display.max_columns = None
@@ -206,9 +207,11 @@ def refresh_convertible_bond():
 
     source_sheets = '可转债实时数据'
     sheet_fund = wb.sheets[source_sheets]
-    data_fund = pd.DataFrame(sheet_fund.range('B2:Q411').value,
-                                       columns=['转债代码','转债名称','当前价','溢价率','双低值','涨跌幅','剩余规模','税前收益',
-                                                '剩余年限','到期时间','转股价','转股价值','成交金额','振幅','最高价','最低价'])
+    source_range = 'B2:R' + str(sheet_fund.used_range.last_cell.row)
+    print('数据表范围：' + source_range)
+    data_fund = pd.DataFrame(sheet_fund.range(source_range).value,
+                                       columns=['转债代码','转债名称','当前价','涨跌幅','转股价','转股价值','溢价率','双低值',
+                                                '到期时间','剩余年限','剩余规模','成交金额','换手率','税前收益','最高价','最低价','振幅'])
     log_file = open('log-' + source_sheets + str(time.strftime("-%Y-%m-%d-%H-%M-%S", time.localtime())) + '.txt', 'a+')
 
     for i,fund_code in enumerate(data_fund['转债代码']):
@@ -219,22 +222,23 @@ def refresh_convertible_bond():
         detail = pd.DataFrame(pysnowball.quote_detail(fund_code_str))
         row1 = detail.loc["quote"][0]
         data_fund.loc[i, '当前价'] = row1["current"]
-        data_fund.loc[i, '溢价率'] = row1["premium_rate"]
-        data_fund.loc[i, '双低值'] = row1["current"] + row1["premium_rate"]
         data_fund.loc[i, '涨跌幅'] = row1["percent"]
-        data_fund.loc[i, '剩余规模'] = row1["outstanding_amt"] / 100000000 if row1["outstanding_amt"] else 0
-        data_fund.loc[i, '税前收益'] = row1["benefit_before_tax"]
-        data_fund.loc[i, '剩余年限'] = row1["remain_year"]
-        data_fund.loc[i, '到期时间'] = str(time.strftime("%Y-%m-%d", time.localtime(row1["maturity_date"]/1000)))
         data_fund.loc[i, '转股价'] = row1["conversion_price"]
         data_fund.loc[i, '转股价值'] = row1["conversion_value"]
+        data_fund.loc[i, '溢价率'] = row1["premium_rate"]
+        data_fund.loc[i, '双低值'] = row1["current"] + row1["premium_rate"]
+        data_fund.loc[i, '到期时间'] = str(time.strftime("%Y-%m-%d", time.localtime(row1["maturity_date"]/1000)))
+        data_fund.loc[i, '剩余年限'] = row1["remain_year"]
+        data_fund.loc[i, '剩余规模'] = row1["outstanding_amt"] / 100000000 if row1["outstanding_amt"] else 0
         data_fund.loc[i, '成交金额'] = row1["amount"] / 10000 if row1["amount"] else 0
+        data_fund.loc[i, '换手率'] = data_fund.loc[i, '成交金额'] / data_fund.loc[i, '剩余规模'] / 10000
+        data_fund.loc[i, '税前收益'] = row1["benefit_before_tax"]
         data_fund.loc[i, '最高价'] = row1["high"]
         data_fund.loc[i, '最低价'] = row1["low"]
         if row1["high"] and row1["low"]:
             data_fund.loc[i, '振幅'] = (row1["high"] - row1["low"]) / row1["low"]
         else:
-            data_fund.loc[i, '振幅'] = '退市'
+            data_fund.loc[i, '振幅'] = '停牌'
         log_str = 'No.' + format(str(i), "<6") + format(str(fund_code_str), "<10") \
                   + format(data_fund.loc[i, '转债名称'], "<15") \
                   + '当前价:' + format(str(row1["current"]), "<10") \
@@ -265,9 +269,10 @@ def refresh_premium_rate_convertible_bond():
     pd.options.display.max_rows = None
 
     sheet_src = wb.sheets['可转债实时数据']
-    data_fund_source = pd.DataFrame(sheet_src.range('B2:Q411').value,
-                                       columns=['转债代码','转债名称','当前价','溢价率','双低值','涨跌幅','剩余规模','税前收益',
-                                                '剩余年限','到期时间','转股价','转股价值','成交金额','振幅','最高价','最低价'])
+    source_range = 'B2:R' + str(sheet_src.used_range.last_cell.row)
+    data_fund_source = pd.DataFrame(sheet_src.range(source_range).value,
+                                       columns=['转债代码','转债名称','当前价','涨跌幅','转股价','转股价值','溢价率','双低值',
+                                                '到期时间','剩余年限','剩余规模','成交金额','换手率','税前收益','最高价','最低价','振幅'])
     data_fund_destination = data_fund_source[['转债代码','转债名称','当前价','溢价率','剩余规模']]
     data_fund_destination = data_fund_destination.sort_values(by='溢价率')
     data_fund_destination.reset_index(drop=True, inplace=True)
@@ -290,9 +295,10 @@ def refresh_price_and_premium_rate_convertible_bond():
     pd.options.display.max_rows = None
 
     sheet_src = wb.sheets['可转债实时数据']
-    data_fund_source = pd.DataFrame(sheet_src.range('B2:Q411').value,
-                                       columns=['转债代码','转债名称','当前价','溢价率','双低值','涨跌幅','剩余规模','税前收益',
-                                                '剩余年限','到期时间','转股价','转股价值','成交金额','振幅','最高价','最低价'])
+    source_range = 'B2:R' + str(sheet_src.used_range.last_cell.row)
+    data_fund_source = pd.DataFrame(sheet_src.range(source_range).value,
+                                       columns=['转债代码','转债名称','当前价','涨跌幅','转股价','转股价值','溢价率','双低值',
+                                                '到期时间','剩余年限','剩余规模','成交金额','换手率','税前收益','最高价','最低价','振幅'])
     data_fund_destination = data_fund_source[['转债代码','转债名称','当前价','溢价率','双低值','剩余规模']]
     data_fund_destination = data_fund_destination.sort_values(by='双低值')
     data_fund_destination.reset_index(drop=True, inplace=True)
