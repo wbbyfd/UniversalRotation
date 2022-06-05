@@ -15,7 +15,7 @@
 
 ### (二)、关于《20天净值增长率和溢价率轮动LOF、ETF和封基》和《20天净值增长率和溢价率轮动债券和境外基金》
 1. 安装Python3：https://www.python.org/ftp/python/3.8.7/python-3.8.7-amd64.exe
-2. 打开cmd窗口输入：pip install xlwings pandas requests pysnowball
+2. 打开cmd窗口输入：pip install xlwings pandas requests pysnowball browser-cookie3
 3. 启用excel中的xlwings宏：
    (a)、命令行安装加载项：xlwings addin install。
    (b)、在excel中启用加载项： 文件>选项>信任中心>信任中心设置>宏设置 中，选择“启用所有并勾选”并勾选“对VBA对象模型的信任访问”。 
@@ -23,8 +23,6 @@
 5. 从券商软件导出我的持仓放在左侧列表，即可看到目前持仓排名了。
 
 
-注4：Python调用API获取溢价率前需要设置token，有20天有效期，可以参考https://blog.crackcreed.com/diy-xue-qiu-app-shu-ju-api/
-来获取token，然后修改UniversalRotation.py里的下面这段code里的xq_a_token即可：
-pysnowball.set_token('xq_a_token=e8119f7d7a050cdbfa822fa0da4de5bec1ee0dc7;')
+注4：Python调用雪球API前需要设置xq_a_token，但它大约只有20天的有效期，之前都是使用F12各种查找xq_a_token然后复制粘贴到我们的Python程序， 搜索发现可以使用browser-cookie3自动化获取电脑浏览器已缓存的cookies（当然浏览器的cookies肯定也会过期，我们只需要坚持每20天左右使用电脑浏览器访问任意一个雪球网站即可刷新电脑浏览器的cookies）。
 
-注5：作为一个Android程序员，从2022.2月份开始边学边练第一次写Python，语法格式肯定不完美，勿喷，仅仅是为了解放调仓的苦恼而写的小玩意，分享出来仅用于学习研究，不可用于商业用途！
+注5：作为一个Android程序员，从2022.2月份开始边学边练第一次写Python项目进行量化投资，语法格式肯定不完美，勿喷，仅仅是为了解放调仓的苦恼而写的小玩意，分享出来仅用于学习研究，不可用于商业用途！
