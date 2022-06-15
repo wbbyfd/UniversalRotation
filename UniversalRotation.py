@@ -13,6 +13,7 @@ def get_fund_net_asset_value_history(fund_code: str, pz: int = 30) -> pandas.Dat
     '''
     根据基金代码和要获取的页码抓取基金净值信息
 
+
     Parameters
     ----------
     fund_code : 6位基金代码
@@ -190,7 +191,7 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, dest_r
     # 更新数据到原Excel
     sheet_fund.range(dest_range).value = data_fund
     wb.save()
-
+    os.system("pause")
 
 @xlwings.func
 # 轮动20天净值增长和溢价率选LOF、ETF和封基
@@ -268,7 +269,7 @@ def refresh_convertible_bond():
     # 更新原Excel
     sheet_fund.range('A1').value = data_fund
     wb.save()
-
+    os.system("pause")
 
 @xlwings.func
 # 更新低溢价可转债数据
@@ -294,6 +295,7 @@ def refresh_premium_rate_convertible_bond():
     sheet_dest = wb.sheets['低溢价可转债轮动']
     sheet_dest.range('H2').value = data_fund_destination
     wb.save()
+    os.system("pause")
 
 
 @xlwings.func
@@ -320,7 +322,7 @@ def refresh_price_and_premium_rate_convertible_bond():
     sheet_dest = wb.sheets['双低可转债轮动']
     sheet_dest.range('H2').value = data_fund_destination
     wb.save()
-
+    os.system("pause")
 
 def main():
     #删除旧log
