@@ -130,7 +130,9 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, dest_r
     data_fund = pandas.DataFrame(sheet_fund.range(source_range).value,
                                        columns=['基金代码','基金名称','投资种类','20天净值增长率','溢价率','总排名分',
                                                 '20天净值增长率排名分','溢价率排名分','成交额(万元)'])
-    log_file = open('log-' + source_sheets + str(time.strftime("-%Y-%m-%d-%H-%M-%S", time.localtime())) + '.txt', 'a+')
+    refresh_time = str(time.strftime("%Y-%m-%d__%H-%M-%S", time.localtime()))
+    sheet_fund.range('R6').value = '更新时间:' + refresh_time
+    log_file = open('log-' + source_sheets + refresh_time + '.txt', 'a+')
 
     for i,fund_code in enumerate(data_fund['基金代码']):
         # 更新溢价率、成交额
@@ -191,7 +193,6 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, dest_r
     # 更新数据到原Excel
     sheet_fund.range(dest_range).value = data_fund
     wb.save()
-    os.system("pause")
 
 @xlwings.func
 # 轮动20天净值增长和溢价率选LOF、ETF和封基
@@ -224,7 +225,9 @@ def refresh_convertible_bond():
     data_fund = pandas.DataFrame(sheet_fund.range(source_range).value,
                                        columns=['转债代码','转债名称','当前价','涨跌幅','转股价','转股价值','溢价率','双低值',
                                                 '到期时间','剩余年限','剩余规模','成交金额','换手率','税前收益','最高价','最低价','振幅'])
-    log_file = open('log-' + source_sheets + str(time.strftime("-%Y-%m-%d-%H-%M-%S", time.localtime())) + '.txt', 'a+')
+    refresh_time = str(time.strftime("%Y-%m-%d__%H-%M-%S", time.localtime()))
+    sheet_fund.range('T6').value = '更新时间:' + refresh_time
+    log_file = open('log-' + source_sheets + refresh_time + '.txt', 'a+')
 
     for i,fund_code in enumerate(data_fund['转债代码']):
         if str(fund_code).startswith('11') or str(fund_code).startswith('13'):
@@ -269,7 +272,6 @@ def refresh_convertible_bond():
     # 更新原Excel
     sheet_fund.range('A1').value = data_fund
     wb.save()
-    os.system("pause")
 
 @xlwings.func
 # 更新低溢价可转债数据
@@ -295,8 +297,6 @@ def refresh_premium_rate_convertible_bond():
     sheet_dest = wb.sheets['低溢价可转债轮动']
     sheet_dest.range('H2').value = data_fund_destination
     wb.save()
-    os.system("pause")
-
 
 @xlwings.func
 # 更新双低可转债数据
@@ -322,7 +322,6 @@ def refresh_price_and_premium_rate_convertible_bond():
     sheet_dest = wb.sheets['双低可转债轮动']
     sheet_dest.range('H2').value = data_fund_destination
     wb.save()
-    os.system("pause")
 
 def main():
     #删除旧log
