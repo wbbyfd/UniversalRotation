@@ -125,13 +125,13 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, dest_r
     pysnowball.set_token(get_xq_a_token())
 
     sheet_fund = wb.sheets[source_sheets]
-    source_range = 'H2:P' + str(sheet_fund.used_range.last_cell.row)
+    source_range = 'H2:R' + str(sheet_fund.used_range.last_cell.row)
     print('数据表范围：' + source_range)
     data_fund = pandas.DataFrame(sheet_fund.range(source_range).value,
-                                       columns=['基金代码','基金名称','投资种类','20天净值增长率','溢价率','总排名分',
-                                                '20天净值增长率排名分','溢价率排名分','成交额(万元)'])
+                                       columns=['基金代码','基金名称','投资种类','5天净值增长率','10天净值增长率','20天净值增长率',
+                                                '溢价率','总排名分','20天净值增长率排名分','溢价率排名分','成交额(万元)'])
     refresh_time = str(time.strftime("%Y-%m-%d__%H-%M-%S", time.localtime()))
-    sheet_fund.range('R6').value = '更新时间:' + refresh_time
+    sheet_fund.range('T6').value = '更新时间:' + refresh_time
     log_file = open('log-' + source_sheets + refresh_time + '.txt', 'a+')
 
     for i,fund_code in enumerate(data_fund['基金代码']):
@@ -146,12 +146,18 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, dest_r
         netAssetValue = get_fund_net_asset_value_history(fund_code[2:8])
         # 最新净值
         netAssetDate1 = netAssetDate20 = str(netAssetValue.loc[0][0])[0:10]
-        netAssetValue1 = netAssetValue20 = netAssetValue.loc[0][2]
-        # 20个交易日前的净值
+        netAssetValue1 = netAssetValue5 = netAssetValue10 = netAssetValue20 = netAssetValue.loc[0][2]
+        # 5个交易日前的净值、10个交易日前的净值、20个交易日前的净值
         if (len(netAssetValue) > 20) :
+            netAssetValue5 = netAssetValue.loc[5][2]
+            netAssetValue10 = netAssetValue.loc[10][2]
             netAssetDate20 = str(netAssetValue.loc[20][0])[0:10]
             netAssetValue20 = netAssetValue.loc[20][2]
-        # 更新20天净值增长率
+        # 更新5天净值增长率、10天净值增长率、20天净值增长率
+        netAssetValue5Rate = round((netAssetValue1 - netAssetValue5) / netAssetValue5 * 100, 2)
+        data_fund.loc[i, '5天净值增长率'] = netAssetValue5Rate
+        netAssetValue10Rate = round((netAssetValue1 - netAssetValue10) / netAssetValue10 * 100, 2)
+        data_fund.loc[i, '10天净值增长率'] = netAssetValue10Rate
         netAssetValue20Rate = round((netAssetValue1 - netAssetValue20) / netAssetValue20 * 100, 2)
         data_fund.loc[i, '20天净值增长率'] = netAssetValue20Rate
 
@@ -167,23 +173,23 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, dest_r
     data_fund = data_fund.sort_values(by='溢价率', ascending=True)
     data_fund.reset_index(drop=True, inplace=True)
     for i,fundPremiumRateValue in enumerate(data_fund['溢价率']):
-        # print('溢价率：' + str(fundPremiumRateValue))
         data_fund.loc[i, '溢价率排名分'] = get_rank_value(len(data_fund), i)
 
     # 更新'20天净值增长率排名分'
     data_fund = data_fund.sort_values(by='20天净值增长率', ascending=False)
     data_fund.reset_index(drop=True, inplace=True)
     for i,netAssetValue in enumerate(data_fund['20天净值增长率']):
-        # print('20天净值增长率：' + str(netAssetValue))
         data_fund.loc[i, '20天净值增长率排名分'] = get_rank_value(len(data_fund), i)
 
-    # 更新'总排名分'
+    # 计算'总排名分'
     for i,sumValue in enumerate(data_fund['总排名分']):
-        data_fund.loc[i, '总排名分'] = data_fund.loc[i, '溢价率排名分'] +\
-                                           data_fund.loc[i, '20天净值增长率排名分']
-        # print('总排名分'+str(data_fund.loc[i, '总排名分']))
+        data_fund.loc[i, '总排名分'] = data_fund.loc[i, '溢价率排名分'] + data_fund.loc[i, '20天净值增长率排名分']
     data_fund = data_fund.sort_values(by='总排名分', ascending=False)
     data_fund.reset_index(drop=True, inplace=True)
+    # 根据排名更新'总排名分'
+    for i,fundPremiumRateValue in enumerate(data_fund['总排名分']):
+        data_fund.loc[i, '总排名分'] = get_rank_value(len(data_fund), i)
+    # 将数据起始下标从1开始计数
     data_fund.index += 1
     print(data_fund)
     print(data_fund, file=log_file)
@@ -200,13 +206,11 @@ def rotate_LOF_ETF():
     print("------------------------20天净值增长率和溢价率轮动LOF、ETF和封基-------------------------------------------------")
     rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动LOF、ETF和封基','G1', 10)
 
-
 @xlwings.func
 # 轮动20天净增和溢价率选债券和境外基金
 def rotate_abroad_fund():
     print("-----------------------20天净值增长率和溢价率轮动债券和境外基金---------------------------------------------------")
     rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动债券和境外基金', 'G1', 10)
-
 
 @xlwings.func
 # 更新可转债实时数据：价格、涨跌幅、转股价、转股价值、溢价率、双低值、到期时间、剩余年限、剩余规模、成交金额、换手率、税前收益、振幅等
