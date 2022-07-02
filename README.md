@@ -2,9 +2,9 @@
 如果想讨论该tool的用法或者新需求，以及量化轮动策略等相关的内容，可以加入用户交流群，共同学习和进步！
 ![](res/author.png)
 
-#### 使用前准备
+### 使用前准备
 1. 安装Python3：https://www.python.org/ftp/python/3.8.7/python-3.8.7-amd64.exe
-2. 打开cmd窗口输入：pip install xlwings pandas requests pysnowball browser-cookie3
+2. 打开cmd窗口输入：pip install schedule xlwings pandas requests pysnowball browser-cookie3
 3. 启用Microsoft Office（不要使用WPS）的Excel中的xlwings宏：
    (1)、命令行安装加载项：xlwings addin install。
    (2)、在excel中启用加载项： 文件>选项>信任中心>信任中心设置>宏设置 中，选择“启用所有并勾选”并勾选“对VBA对象模型的信任访问”。 
