@@ -9,7 +9,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 @xlwings.func
-def get_fund_net_asset_value_history(fund_code: str, pz: int = 30) -> pandas.DataFrame:
+def get_fund_net_asset_value_history(fund_code: str, pz: int = 500) -> pandas.DataFrame:
     '''
     根据基金代码和要获取的页码抓取基金净值信息
 
@@ -90,7 +90,7 @@ def get_fund_premium_rate_and_amount(fund_code: str):
     current_price = row1["current"]
     amount1 = row1["amount"]
     amount1 = amount1/10000 if amount1 else 0
-    return current_price,premium_rate1,amount1
+    return current_price, premium_rate1, amount1
 
 @xlwings.func
 # 获取xq_a_token
@@ -131,13 +131,15 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, dest_r
     pysnowball.set_token(get_xq_a_token())
 
     sheet_fund = wb.sheets[source_sheets]
-    source_range = 'H2:R' + str(sheet_fund.used_range.last_cell.row)
+    # 数据表范围请参考Excel里的"最新数据"区域
+    source_range = 'H2:V' + str(sheet_fund.used_range.last_cell.row)
     print('数据表范围：' + source_range)
     data_fund = pandas.DataFrame(sheet_fund.range(source_range).value,
-                                       columns=['基金代码','基金名称','投资种类','5天净值增长率','10天净值增长率','20天净值增长率',
-                                                '溢价率','总排名分','20天净值增长率排名分','溢价率排名分','成交额(万元)'])
+                                       columns=['基金代码','基金名称','投资种类','溢价率','5天净值增长率','10天净值增长率',
+                                                '20天净值增长率','60天净值增长率','120天净值增长率','250天净值增长率',
+                                                '500天净值增长率','总排名分','20天净值增长率排名分','溢价率排名分','成交额(万元)'])
     refresh_time = str(time.strftime("%Y-%m-%d__%H-%M-%S", time.localtime()))
-    sheet_fund.range('T6').value = '更新时间:' + refresh_time
+    sheet_fund.range('X6').value = '更新时间:' + refresh_time
     log_file = open('log-' + source_sheets + refresh_time + '.txt', 'a+')
 
     for i,fund_code in enumerate(data_fund['基金代码']):
@@ -146,26 +148,42 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, dest_r
             time.sleep(random.randrange(delay))
 
         netAssetValueRaw = get_fund_net_asset_value_history(fund_code[2:8])
-        # 最新净值、5个交易日前的累计净值、10个交易日前的累计净值、20个交易日前的累计净值
-        netAssetDate1 = netAssetDate20 = str(netAssetValueRaw.loc[0]['日期'])[0:10]
-        netAssetLJValue1 = netAssetLJValue5 = netAssetLJValue10 = netAssetLJValue20 = netAssetValueRaw.loc[0]['累计净值']
+        # 最新净值以及5个交易日前、10个交易日前、20个交易日前、60个交易日前、120个交易日前、250个交易日前、500个交易日前的累计净值
+        netAssetDate1 = str(netAssetValueRaw.loc[0]['日期'])[0:10]
+        netAssetLJValue1 = netAssetValueRaw.loc[0]['累计净值']
+        netAssetDate20 = str(netAssetValueRaw.loc[len(netAssetValueRaw)-1]['日期'])[0:10]
+        netAssetLJValue5 = netAssetLJValue10 = netAssetLJValue20 = netAssetLJValue60 = netAssetLJValue120 \
+            = netAssetLJValue250 = netAssetLJValue500 = netAssetValueRaw.loc[len(netAssetValueRaw)-1]['累计净值']
         if (len(netAssetValueRaw) > 20) :
             netAssetLJValue5 = netAssetValueRaw.loc[5]['累计净值']
             netAssetLJValue10 = netAssetValueRaw.loc[10]['累计净值']
             netAssetDate20 = str(netAssetValueRaw.loc[20]['日期'])[0:10]
             netAssetLJValue20 = netAssetValueRaw.loc[20]['累计净值']
-        # 更新5天累计净值增长率、10天累计净值增长率、20天累计净值增长率
-        netAssetLJValue5Rate = round((netAssetLJValue1 - netAssetLJValue5) / netAssetLJValue5 * 100, 2)
+        if (len(netAssetValueRaw) > 60) :
+            netAssetLJValue60 = netAssetValueRaw.loc[60]['累计净值']
+        if (len(netAssetValueRaw) > 120) :
+            netAssetLJValue120 = netAssetValueRaw.loc[120]['累计净值']
+        if (len(netAssetValueRaw) > 250) :
+            netAssetLJValue250 = netAssetValueRaw.loc[250]['累计净值']
+        if (len(netAssetValueRaw) > 500) :
+            netAssetLJValue500 = netAssetValueRaw.loc[500]['累计净值']
+        # 更新5天、10天、20天、60天、120天、250天、500天累计净值增长率
+        netAssetLJValue5Rate = round((netAssetLJValue1 - netAssetLJValue5) / netAssetLJValue5, 4)
         data_fund.loc[i, '5天净值增长率'] = netAssetLJValue5Rate
-        netAssetLJValue10Rate = round((netAssetLJValue1 - netAssetLJValue10) / netAssetLJValue10 * 100, 2)
+        netAssetLJValue10Rate = round((netAssetLJValue1 - netAssetLJValue10) / netAssetLJValue10, 4)
         data_fund.loc[i, '10天净值增长率'] = netAssetLJValue10Rate
-        netAssetLJValue20Rate = round((netAssetLJValue1 - netAssetLJValue20) / netAssetLJValue20 * 100, 2)
+        netAssetLJValue20Rate = round((netAssetLJValue1 - netAssetLJValue20) / netAssetLJValue20, 4)
         data_fund.loc[i, '20天净值增长率'] = netAssetLJValue20Rate
+        data_fund.loc[i, '60天净值增长率'] = round((netAssetLJValue1 - netAssetLJValue60) / netAssetLJValue60, 4)
+        data_fund.loc[i, '120天净值增长率'] = round((netAssetLJValue1 - netAssetLJValue120) / netAssetLJValue120, 4)
+        data_fund.loc[i, '250天净值增长率'] = round((netAssetLJValue1 - netAssetLJValue250) / netAssetLJValue250, 4)
+        data_fund.loc[i, '500天净值增长率'] = round((netAssetLJValue1 - netAssetLJValue500) / netAssetLJValue500, 4)
 
         # 更新基金的市价、溢价率、成交量
         current_price,fundPremiumRateValue,fundAmount = get_fund_premium_rate_and_amount(fund_code)
         netAssetDWValue1 = netAssetValueRaw.loc[0]['单位净值']
-        fundPremiumRateValue =  round((current_price - netAssetDWValue1) / current_price * 100, 2)
+        if (current_price) :
+            fundPremiumRateValue =  round((current_price - netAssetDWValue1) / current_price, 4)
         data_fund.loc[i, '溢价率'] = fundPremiumRateValue
         data_fund.loc[i, '成交额(万元)'] = fundAmount
 
@@ -249,17 +267,17 @@ def refresh_convertible_bond():
         detail = pandas.DataFrame(pysnowball.quote_detail(fund_code_str))
         row1 = detail.loc["quote"][0]
         data_fund.loc[i, '当前价'] = row1["current"]
-        data_fund.loc[i, '涨跌幅'] = row1["percent"]
+        data_fund.loc[i, '涨跌幅'] = row1["percent"] / 100
         data_fund.loc[i, '转股价'] = row1["conversion_price"]
         data_fund.loc[i, '转股价值'] = row1["conversion_value"]
-        data_fund.loc[i, '溢价率'] = row1["premium_rate"]
+        data_fund.loc[i, '溢价率'] = row1["premium_rate"] / 100
         data_fund.loc[i, '双低值'] = row1["current"] + row1["premium_rate"]
         data_fund.loc[i, '到期时间'] = str(time.strftime("%Y-%m-%d", time.localtime(row1["maturity_date"]/1000)))
         data_fund.loc[i, '剩余年限'] = row1["remain_year"]
         data_fund.loc[i, '剩余规模'] = row1["outstanding_amt"] / 100000000 if row1["outstanding_amt"] else 0
         data_fund.loc[i, '成交金额'] = row1["amount"] / 10000 if row1["amount"] else 0
         data_fund.loc[i, '换手率'] = (data_fund.loc[i, '成交金额'] / 10000 / row1["current"]) / (data_fund.loc[i, '剩余规模'] / 100)
-        data_fund.loc[i, '税前收益'] = row1["benefit_before_tax"]
+        data_fund.loc[i, '税前收益'] = row1["benefit_before_tax"] / 100
         data_fund.loc[i, '最高价'] = row1["high"]
         data_fund.loc[i, '最低价'] = row1["low"]
         if row1["high"] and row1["low"]:
@@ -337,7 +355,7 @@ def refresh_price_and_premium_rate_convertible_bond():
 
 def main_function():
     webbrowser.open("https://xueqiu.com/")
-    time.sleep(60)
+    # time.sleep(60)
     #删除旧log
     for eachfile in os.listdir('./'):
         filename = os.path.join('./', eachfile)
