@@ -267,17 +267,17 @@ def refresh_convertible_bond():
         detail = pandas.DataFrame(pysnowball.quote_detail(fund_code_str))
         row1 = detail.loc["quote"][0]
         data_fund.loc[i, '当前价'] = row1["current"]
-        data_fund.loc[i, '涨跌幅'] = row1["percent"] / 100
+        data_fund.loc[i, '涨跌幅'] = row1["percent"] / 100 if row1["percent"] != None else '停牌'
         data_fund.loc[i, '转股价'] = row1["conversion_price"]
         data_fund.loc[i, '转股价值'] = row1["conversion_value"]
-        data_fund.loc[i, '溢价率'] = row1["premium_rate"] / 100
+        data_fund.loc[i, '溢价率'] = row1["premium_rate"] / 100 if row1["premium_rate"] != None else '停牌'
         data_fund.loc[i, '双低值'] = row1["current"] + row1["premium_rate"]
         data_fund.loc[i, '到期时间'] = str(time.strftime("%Y-%m-%d", time.localtime(row1["maturity_date"]/1000)))
         data_fund.loc[i, '剩余年限'] = row1["remain_year"]
-        data_fund.loc[i, '剩余规模'] = row1["outstanding_amt"] / 100000000 if row1["outstanding_amt"] else 0
-        data_fund.loc[i, '成交金额'] = row1["amount"] / 10000 if row1["amount"] else 0
+        data_fund.loc[i, '剩余规模'] = row1["outstanding_amt"] / 100000000 if row1["outstanding_amt"] != None else 1
+        data_fund.loc[i, '成交金额'] = row1["amount"] / 10000 if row1["amount"] != None else 0
         data_fund.loc[i, '换手率'] = (data_fund.loc[i, '成交金额'] / 10000 / row1["current"]) / (data_fund.loc[i, '剩余规模'] / 100)
-        data_fund.loc[i, '税前收益'] = row1["benefit_before_tax"] / 100
+        data_fund.loc[i, '税前收益'] = row1["benefit_before_tax"] / 100 if row1["benefit_before_tax"] != None else '停牌'
         data_fund.loc[i, '最高价'] = row1["high"]
         data_fund.loc[i, '最低价'] = row1["low"]
         if row1["high"] and row1["low"]:
