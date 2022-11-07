@@ -13,8 +13,8 @@
 
 注1：如遇到如下报错就代表token过期了：
 Exception: b'{"error_description":"\xe9\x81\x87","error_uri":"/v5/stock/quote.json","error_data":null,"error_code":"400016"}'。
-由于我们在Python调用雪球API前需要设置xq_a_token，但它大约只有20天的有效期，之前都是使用F12各种查找xq_a_token然后复制粘贴到我们的Python程序， 
-搜索发现可以使用browser-cookie3自动化获取电脑浏览器已缓存的cookies（当然浏览器的cookies肯定也会过期，我们只需要坚持每20天左右使用电脑浏览器访问任意一个雪球网站即可刷新电脑浏览器的cookies）。
+由于我们在Python调用雪球API前需要设置xq_a_token，但它大约只有20天的有效期，之前都是使用F12各种查找xq_a_token然后复制粘贴到我们的Python程序，
+比较繁琐，所以现在改用browser-cookie3工具库来自动化获取电脑浏览器已缓存的cookies（当然啦，浏览器的cookies肯定也会过期，我们只需要坚持每20天左右使用电脑浏览器访问任意一个雪球网站即可刷新电脑浏览器的cookies）。
 
 注2：作为一个Android程序员，从2022.2月份开始边学边练第一次写Python项目进行量化投资，语法格式肯定不完美，勿喷，仅仅是为了解放调仓的苦恼而写的小玩意，分享出来仅用于学习研究，不可用于商业用途！
 
@@ -33,5 +33,5 @@ Exception: b'{"error_description":"\xe9\x81\x87","error_uri":"/v5/stock/quote.js
 
 
 ### (二)、关于《20天净值增长率和溢价率轮动LOF、ETF和封基》和《20天净值增长率和溢价率轮动债券和境外基金》
-1. 点击“点击更新”按钮，即可更新这2个策略(https://xueqiu.com/P/ZH3040077和https://xueqiu.com/P/ZH3044957)的最新的排名数据。
+1. 点击“点击更新”按钮，即可更新这2个策略(https://xueqiu.com/P/ZH3040077 和 https://xueqiu.com/P/ZH3044957)的最新的排名数据。
 2. 从券商PC端软件导出我的持仓放在左侧列表，即可看到目前持仓排名了。
