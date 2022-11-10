@@ -1,5 +1,8 @@
 原贴地址：https://www.jisilu.cn/question/457389
 
+下载源码的方式：点击GitHub网页上的Code按钮，选择自己喜欢的下载方式即可：
+![](res/download.png)
+
 ### 联系作者
 如果想讨论该tool的用法或者新需求，以及量化轮动策略等相关的内容，可以联系微信小助手wangbabaodzsf加入用户交流群，共同学习和进步！
 
