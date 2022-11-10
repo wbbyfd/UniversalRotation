@@ -1,3 +1,5 @@
+原贴地址：https://www.jisilu.cn/question/457389
+
 ### 联系作者
 如果想讨论该tool的用法或者新需求，以及量化轮动策略等相关的内容，可以联系微信小助手wangbabaodzsf加入用户交流群，共同学习和进步！
 
@@ -33,5 +35,5 @@ Exception: b'{"error_description":"\xe9\x81\x87","error_uri":"/v5/stock/quote.js
 
 
 ### (二)、关于《20天净值增长率和溢价率轮动LOF、ETF和封基》和《20天净值增长率和溢价率轮动债券和境外基金》
-1. 点击“点击更新”按钮，即可更新这2个策略(https://xueqiu.com/P/ZH3040077 和 https://xueqiu.com/P/ZH3044957)的最新的排名数据。
+1. 点击“点击更新”按钮，即可更新这2个策略(https://xueqiu.com/P/ZH3040077 和 https://xueqiu.com/P/ZH3044957 )的最新的排名数据。
 2. 从券商PC端软件导出我的持仓放在左侧列表，即可看到目前持仓排名了。
