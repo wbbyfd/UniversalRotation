@@ -188,7 +188,7 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, dest_r
         current_price,fundPremiumRateValue,fundAmount = get_fund_premium_rate_and_amount(fund_code)
         netAssetDWValue1 = netAssetValueRaw.loc[0]['单位净值']
         if (current_price) :
-            fundPremiumRateValue =  round((current_price - netAssetDWValue1) / current_price, 4)
+            fundPremiumRateValue =  round((current_price - netAssetDWValue1) / netAssetDWValue1, 4)
         data_fund.loc[i, '溢价率'] = fundPremiumRateValue
         data_fund.loc[i, '成交额(万元)'] = fundAmount
 
