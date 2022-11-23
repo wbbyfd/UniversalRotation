@@ -10,11 +10,11 @@
 
 ### 使用前准备
 1. 安装Python3：https://www.python.org/ftp/python/3.8.7/python-3.8.7-amd64.exe
-2. 打开cmd窗口输入：pip install schedule xlwings pandas requests pysnowball browser-cookie3
+2. 打开cmd窗口输入：pip install schedule xlwings pandas requests pysnowball browser-cookie3 chinese_calendar
 3. 启用Microsoft Office（不要使用WPS）的Excel中的xlwings宏：
    (1)、命令行安装加载项：xlwings addin install。
    (2)、在excel中启用加载项： 文件>选项>信任中心>信任中心设置>宏设置 中，选择“启用所有并勾选”并勾选“对VBA对象模型的信任访问”。 
-4. 使用电脑浏览器Chrome/Firefox/Opera/Edge/Chromium访问任意一个雪球网站以便获取token，不需要登录雪球账号。
+4. 设置Chrome或Firefox或Opera或Edge或Chromium为默认浏览器，使用他们的任意一个访问任意一个雪球网站以便获取token（不需要登录雪球账号）。
 
 注1：如遇到如下报错就代表token过期了：
 Exception: b'{"error_description":"\xe9\x81\x87","error_uri":"/v5/stock/quote.json","error_data":null,"error_code":"400016"}'。

@@ -1,9 +1,10 @@
-import os, random, time, schedule, webbrowser
+import os, random, time, datetime, schedule, webbrowser
 import xlwings
 import pandas
 import requests
 import pysnowball
 import browser_cookie3
+from chinese_calendar import is_workday
 
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -359,23 +360,25 @@ def refresh_price_and_premium_rate_convertible_bond():
     wb.save()
 
 def main_function():
-    webbrowser.open("https://xueqiu.com/")
-    # time.sleep(60)
-    #删除旧log
-    for eachfile in os.listdir('./'):
-        filename = os.path.join('./', eachfile)
-        if os.path.isfile(filename) and filename.startswith("./log") :
-            os.remove(filename)
+    date = datetime.datetime.now().date()
+    if is_workday(date):
+        webbrowser.open("https://xueqiu.com/")
 
-    rotate_LOF_ETF()
-    rotate_abroad_fund()
-    refresh_convertible_bond()
-    refresh_premium_rate_convertible_bond()
-    refresh_price_and_premium_rate_convertible_bond()
+        #删除旧log
+        for eachfile in os.listdir('./'):
+            filename = os.path.join('./', eachfile)
+            if os.path.isfile(filename) and filename.startswith("./log") :
+                os.remove(filename)
+
+        rotate_LOF_ETF()
+        rotate_abroad_fund()
+        refresh_convertible_bond()
+        refresh_premium_rate_convertible_bond()
+        refresh_price_and_premium_rate_convertible_bond()
 
 def main():
     main_function()
-    schedule.every().day.at("07:00").do(main_function)  # 部署每天7：00执行更新数据任务
+    schedule.every().day.at("07:00").do(main_function)  # 部署7：00执行更新数据任务
     while True:
         schedule.run_pending()
 
