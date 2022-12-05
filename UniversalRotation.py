@@ -256,13 +256,14 @@ def refresh_convertible_bond():
 
     source_sheets = '可转债实时数据'
     sheet_fund = wb.sheets[source_sheets]
-    source_range = 'B2:R' + str(sheet_fund.used_range.last_cell.row)
+    source_range = 'B7:T' + str(sheet_fund.used_range.last_cell.row)
     print('数据表范围：' + source_range)
     data_fund = pandas.DataFrame(sheet_fund.range(source_range).value,
                                        columns=['转债代码','转债名称','当前价','涨跌幅','转股价','转股价值','溢价率','双低值',
-                                                '到期时间','剩余年限','剩余规模','成交金额','换手率','税前收益','最高价','最低价','振幅'])
+                                                '到期时间','剩余年限','剩余规模','成交金额','换手率','税前收益','最高价','最低价',
+                                                '振幅','多因子1排名','多因子2排名'])
     refresh_time = str(time.strftime("%Y-%m-%d__%H-%M-%S", time.localtime()))
-    sheet_fund.range('T6').value = '更新时间:' + refresh_time
+    sheet_fund.range('W11').value = '更新时间:' + refresh_time
     log_file = open('log-' + source_sheets + refresh_time + '.txt', 'a+')
 
     for i,fund_code in enumerate(data_fund['转债代码']):
@@ -300,13 +301,13 @@ def refresh_convertible_bond():
 
     data_fund = data_fund.sort_values(by='溢价率')
     data_fund.reset_index(drop=True, inplace=True)
-    data_fund.index +=1
+    data_fund.index += 1
     print(data_fund)
     print(data_fund, file=log_file)
 
     log_file.close()
     # 更新原Excel
-    sheet_fund.range('A1').value = data_fund
+    sheet_fund.range('A6').value = data_fund
     wb.save()
 
 @xlwings.func
@@ -319,19 +320,23 @@ def refresh_premium_rate_convertible_bond():
     pandas.options.display.max_rows = None
 
     sheet_src = wb.sheets['可转债实时数据']
-    source_range = 'B2:R' + str(sheet_src.used_range.last_cell.row)
+    source_range = 'B7:T' + str(sheet_src.used_range.last_cell.row)
     data_fund_source = pandas.DataFrame(sheet_src.range(source_range).value,
                                        columns=['转债代码','转债名称','当前价','涨跌幅','转股价','转股价值','溢价率','双低值',
-                                                '到期时间','剩余年限','剩余规模','成交金额','换手率','税前收益','最高价','最低价','振幅'])
+                                                '到期时间','剩余年限','剩余规模','成交金额','换手率','税前收益','最高价','最低价',
+                                                '振幅','多因子1排名','多因子2排名'])
     data_fund_destination = data_fund_source[['转债代码','转债名称','当前价','溢价率','剩余规模']]
+    data_fund_destination = data_fund_destination[(data_fund_destination['当前价'] < sheet_src.range('D2').value) &
+                                                  (data_fund_destination['溢价率'] < sheet_src.range('H2').value) &
+                                                  (data_fund_destination['剩余规模'] < sheet_src.range('L2').value)]
     data_fund_destination = data_fund_destination.sort_values(by='溢价率')
     data_fund_destination.reset_index(drop=True, inplace=True)
-    data_fund_destination.index +=1
+    data_fund_destination.index += 1
     print(data_fund_destination)
 
     # 更新低溢价可转债轮动sheet
     sheet_dest = wb.sheets['低溢价可转债轮动']
-    sheet_dest.range('H2').value = data_fund_destination
+    sheet_dest.range('H2').value = data_fund_destination[:50]
     wb.save()
 
 @xlwings.func
@@ -344,11 +349,15 @@ def refresh_price_and_premium_rate_convertible_bond():
     pandas.options.display.max_rows = None
 
     sheet_src = wb.sheets['可转债实时数据']
-    source_range = 'B2:R' + str(sheet_src.used_range.last_cell.row)
+    source_range = 'B7:T' + str(sheet_src.used_range.last_cell.row)
     data_fund_source = pandas.DataFrame(sheet_src.range(source_range).value,
                                        columns=['转债代码','转债名称','当前价','涨跌幅','转股价','转股价值','溢价率','双低值',
-                                                '到期时间','剩余年限','剩余规模','成交金额','换手率','税前收益','最高价','最低价','振幅'])
+                                                '到期时间','剩余年限','剩余规模','成交金额','换手率','税前收益','最高价','最低价',
+                                                '振幅','多因子1排名','多因子2排名'])
     data_fund_destination = data_fund_source[['转债代码','转债名称','当前价','溢价率','双低值','剩余规模']]
+    data_fund_destination = data_fund_destination[(data_fund_destination['当前价'] < sheet_src.range('D3').value) &
+                                                  (data_fund_destination['溢价率'] < sheet_src.range('H3').value) &
+                                                  (data_fund_destination['剩余规模'] < sheet_src.range('L3').value)]
     data_fund_destination = data_fund_destination.sort_values(by='双低值')
     data_fund_destination.reset_index(drop=True, inplace=True)
     data_fund_destination.index +=1
@@ -356,25 +365,87 @@ def refresh_price_and_premium_rate_convertible_bond():
 
     # 更新双低可转债轮动sheet
     sheet_dest = wb.sheets['双低可转债轮动']
-    sheet_dest.range('H2').value = data_fund_destination
+    sheet_dest.range('H2').value = data_fund_destination[:50]
+    wb.save()
+
+@xlwings.func
+# 更新多因子1可转债数据
+def refresh_multifactor1_convertible_bond():
+    print("--------------------------------------更新多因子1可转债数据----------------------------------------------------")
+    xlwings.Book("UniversalRotation.xlsm").set_mock_caller()
+    wb = xlwings.Book.caller()
+    pandas.options.display.max_columns = None
+    pandas.options.display.max_rows = None
+
+    sheet_src = wb.sheets['可转债实时数据']
+    source_range = 'B7:T' + str(sheet_src.used_range.last_cell.row)
+    data_fund_source = pandas.DataFrame(sheet_src.range(source_range).value,
+                                       columns=['转债代码','转债名称','当前价','涨跌幅','转股价','转股价值','溢价率','双低值',
+                                                '到期时间','剩余年限','剩余规模','成交金额','换手率','税前收益','最高价','最低价',
+                                                '振幅','多因子1排名','多因子2排名'])
+    data_fund_destination = data_fund_source[['转债代码','转债名称','当前价','溢价率','剩余规模']]
+    data_fund_destination = data_fund_destination[(data_fund_destination['当前价'] < sheet_src.range('D4').value) &
+                                                  (data_fund_destination['溢价率'] < sheet_src.range('H4').value) &
+                                                  (data_fund_destination['剩余规模'] < sheet_src.range('L4').value)]
+    data_fund_destination = data_fund_destination.sort_values(by='溢价率')
+    data_fund_destination.reset_index(drop=True, inplace=True)
+    data_fund_destination.index += 1
+    print(data_fund_destination)
+
+    # 更新低溢价可转债轮动sheet
+    sheet_dest = wb.sheets['低溢价可转债轮动']
+    sheet_dest.range('Q2').value = data_fund_destination[:50]
+    wb.save()
+
+@xlwings.func
+# 更新多因子2可转债数据
+def refresh_multifactor2_convertible_bond():
+    print("----------------------------------------更新多因子2可转债数据----------------------------------------------------")
+    xlwings.Book("UniversalRotation.xlsm").set_mock_caller()
+    wb = xlwings.Book.caller()
+    pandas.options.display.max_columns = None
+    pandas.options.display.max_rows = None
+
+    sheet_src = wb.sheets['可转债实时数据']
+    source_range = 'B7:T' + str(sheet_src.used_range.last_cell.row)
+    data_fund_source = pandas.DataFrame(sheet_src.range(source_range).value,
+                                       columns=['转债代码','转债名称','当前价','涨跌幅','转股价','转股价值','溢价率','双低值',
+                                                '到期时间','剩余年限','剩余规模','成交金额','换手率','税前收益','最高价','最低价',
+                                                '振幅','多因子1排名','多因子2排名'])
+    data_fund_destination = data_fund_source[['转债代码','转债名称','当前价','溢价率','剩余规模']]
+    data_fund_destination = data_fund_destination[(data_fund_destination['当前价'] < sheet_src.range('D5').value) &
+                                                  (data_fund_destination['溢价率'] < sheet_src.range('H5').value) &
+                                                  (data_fund_destination['剩余规模'] < sheet_src.range('L5').value)]
+    data_fund_destination = data_fund_destination.sort_values(by='溢价率')
+    data_fund_destination.reset_index(drop=True, inplace=True)
+    data_fund_destination.index += 1
+    print(data_fund_destination)
+
+    # 更新双低可转债轮动sheet
+    sheet_dest = wb.sheets['双低可转债轮动']
+    sheet_dest.range('R2').value = data_fund_destination[:50]
     wb.save()
 
 def main_function():
     date = datetime.datetime.now().date()
-    if is_workday(date):
-        webbrowser.open("https://xueqiu.com/")
+    if not is_workday(date):
+        return
+    webbrowser.open("https://xueqiu.com/")
 
-        #删除旧log
-        for eachfile in os.listdir('./'):
-            filename = os.path.join('./', eachfile)
-            if os.path.isfile(filename) and filename.startswith("./log") :
-                os.remove(filename)
+    #删除旧log
+    for eachfile in os.listdir('./'):
+        filename = os.path.join('./', eachfile)
+        if os.path.isfile(filename) and filename.startswith("./log") :
+            os.remove(filename)
 
-        rotate_LOF_ETF()
-        rotate_abroad_fund()
-        refresh_convertible_bond()
-        refresh_premium_rate_convertible_bond()
-        refresh_price_and_premium_rate_convertible_bond()
+    rotate_LOF_ETF()
+    rotate_abroad_fund()
+
+    refresh_convertible_bond()
+    refresh_premium_rate_convertible_bond()
+    refresh_price_and_premium_rate_convertible_bond()
+    refresh_multifactor1_convertible_bond()
+    refresh_multifactor2_convertible_bond()
 
 def main():
     main_function()
