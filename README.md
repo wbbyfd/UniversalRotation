@@ -21,8 +21,9 @@ Exception: b'{"error_description":"\xe9\x81\x87","error_uri":"/v5/stock/quote.js
 由于我们在Python调用雪球API前需要设置xq_a_token，但它大约只有20天的有效期，之前都是使用F12各种查找xq_a_token然后复制粘贴到我们的Python程序，
 比较繁琐，所以现在改用browser-cookie3工具库来自动化获取电脑浏览器已缓存的cookies（当然啦，浏览器的cookies肯定也会过期，我们只需要坚持每20天左右使用电脑浏览器访问任意一个雪球网站即可刷新电脑浏览器的cookies）。
 
-注2：如遇到如下报错就代表chinese_calendar过期了，需要升级：pip install -U chinesecalendar
-no available data for year 2023, only year between [2004, 2022] supported
+注2：如遇到如下报错就代表chinese_calendar过期了：
+no available data for year 2023, only year between [2004, 2022] supported.
+需要升级：pip install -U chinesecalendar
 
 注3：作为一个Android程序员，从2022.2月份开始边学边练第一次写Python项目进行量化投资，语法格式肯定不完美，勿喷，仅仅是为了解放调仓的苦恼而写的小玩意，分享出来仅用于学习研究，不可用于商业用途！
 

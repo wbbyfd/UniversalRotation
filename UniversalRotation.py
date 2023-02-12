@@ -394,6 +394,12 @@ def refresh_multifactor1_convertible_bond():
     threshold_current_price, weight_current_price = get_convertible_bond_factor(sheet_src.range('D5').value)
     threshold_premium_rate, weight_premium_rate = get_convertible_bond_factor(sheet_src.range('H5').value)
     threshold_outstanding_amt, weight_outstanding_amt = get_convertible_bond_factor(sheet_src.range('L5').value)
+
+    # for i, fund_code in enumerate(data_fund_source['转债代码']):
+    #     data_fund_source.loc[i, '多因子1排名'] = data_fund_source.loc[i, '当前价'] * weight_current_price
+    #     + data_fund_source.loc[i, '溢价率'] * weight_premium_rate
+    #     + data_fund_source.loc[i, '剩余规模'] * weight_outstanding_amt
+
     data_fund_destination = data_fund_destination[(data_fund_destination['当前价'] < threshold_current_price) &
                                                   (data_fund_destination['溢价率'] < threshold_premium_rate) &
                                                   (data_fund_destination['剩余规模'] < threshold_outstanding_amt)]
