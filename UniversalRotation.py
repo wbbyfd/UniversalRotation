@@ -446,9 +446,9 @@ def refresh_multifactor2_convertible_bond():
     wb.save()
 
 def main_function():
-    date = datetime.datetime.now().date()
-    if not is_workday(date):
-        return
+    # date = datetime.datetime.now().date()
+    # if not is_workday(date):
+    #     return
     webbrowser.open("https://xueqiu.com/")
 
     #删除旧log
