@@ -133,15 +133,15 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, dest_r
 
     sheet_fund = wb.sheets[source_sheets]
     # 数据表范围请参考Excel里的"最新数据"区域
-    source_range = 'H2:X' + str(sheet_fund.used_range.last_cell.row)
+    source_range = 'H2:Y' + str(sheet_fund.used_range.last_cell.row)
     print('数据表范围：' + source_range)
     data_fund = pandas.DataFrame(sheet_fund.range(source_range).value,
                                        columns=['基金代码','基金名称','投资种类','溢价率','5天净值增长率','10天净值增长率',
                                                 '20天净值增长率','60天净值增长率','120天净值增长率','250天净值增长率',
                                                 '500天净值增长率','750天净值增长率','总排名分','20天净值增长率排名分',
-                                                '溢价率排名分','成交额(万元)','Mark'])
-    refresh_time = str(time.strftime("%Y-%m-%d__%H-%M-%S", time.localtime()))
-    sheet_fund.range('Z6').value = '更新时间:' + refresh_time
+                                                '溢价率排名分','成交额(万元)','Mark','持有周期'])
+    refresh_time = str(time.strftime("%Y-%m-%d__%H.%M.%S", time.localtime()))
+    sheet_fund.range('AA6').value = '更新时间:' + refresh_time
     log_file = open('log-' + source_sheets + refresh_time + '.txt', 'a+')
 
     for i,fund_code in enumerate(data_fund['基金代码']):
@@ -269,7 +269,7 @@ def refresh_convertible_bond():
                                        columns=['转债代码','转债名称','当前价','涨跌幅','转股价','转股价值','溢价率','双低值',
                                                 '到期时间','剩余年限','剩余规模','成交金额','换手率','税前收益','最高价','最低价',
                                                 '振幅','多因子1排名','多因子2排名'])
-    refresh_time = str(time.strftime("%Y-%m-%d__%H-%M-%S", time.localtime()))
+    refresh_time = str(time.strftime("%Y-%m-%d__%H.%M.%S", time.localtime()))
     sheet_fund.range('W12').value = '更新时间:' + refresh_time
     log_file = open('log-' + source_sheets + refresh_time + '.txt', 'a+')
 
