@@ -146,7 +146,7 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, dest_r
 
     for i,fund_code in enumerate(data_fund['基金代码']):
         # 延时
-        if (i % 10 == 0) :
+        if (i % 5 == 0) :
             time.sleep(random.randrange(delay))
 
         netAssetValueRaw = get_fund_net_asset_value_history(fund_code[2:8])
@@ -236,13 +236,13 @@ def rotate_fund_by_premium_rate_and_20net_asset_value(source_sheets: str, dest_r
 # 轮动20天净值增长和溢价率选LOF、ETF和封基
 def rotate_LOF_ETF():
     print("------------------------20天净值增长率和溢价率轮动LOF、ETF和封基-------------------------------------------------")
-    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动LOF、ETF和封基','G1', 10)
+    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动LOF、ETF和封基','G1', 30)
 
 @xlwings.func
 # 轮动20天净增和溢价率选债券和境外基金
 def rotate_abroad_fund():
     print("-----------------------20天净值增长率和溢价率轮动债券和境外基金---------------------------------------------------")
-    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动债券和境外基金', 'G1', 10)
+    rotate_fund_by_premium_rate_and_20net_asset_value('20天净值增长率和溢价率轮动债券和境外基金', 'G1', 30)
 
 source_range_convertible_bond = 'B8:T'
 
@@ -458,13 +458,16 @@ def main_function():
             os.remove(filename)
 
     rotate_LOF_ETF()
-    rotate_abroad_fund()
+
+    webbrowser.open("https://xueqiu.com/")
 
     refresh_convertible_bond()
     refresh_premium_rate_convertible_bond()
     refresh_price_and_premium_rate_convertible_bond()
     refresh_multifactor1_convertible_bond()
     refresh_multifactor2_convertible_bond()
+
+    rotate_abroad_fund()
 
 def main():
     main_function()
