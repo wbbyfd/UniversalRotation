@@ -14,12 +14,13 @@
 3. 启用Microsoft Office（不要使用WPS）的Excel中的xlwings宏：
    (1)、命令行安装加载项：xlwings addin install。
    (2)、在excel中启用加载项： 文件>选项>信任中心>信任中心设置>宏设置 中，选择“启用所有并勾选”并勾选“对VBA对象模型的信任访问”。 
-4. 设置Chrome(我用的版本是108.0.5359.125)或Firefox或Opera或Edge或Chromium为默认浏览器，使用他们的任意一个访问任意一个雪球网站以便获取token（不需要登录雪球账号）。
+4. 设置Firefox(强烈推荐)或Chrome(我用的版本是108.0.5359.125，建议使用最新版，因为太多网友因为版本太低导致无法使用browser-cookie3)或Opera或Edge或Chromium为默认浏览器，使用他们的任意一个访问任意一个雪球网站以便获取token（不需要登录雪球账号）。
 
 注1：如遇到如下报错就代表token过期了：
 Exception: b'{"error_description":"\xe9\x81\x87","error_uri":"/v5/stock/quote.json","error_data":null,"error_code":"400016"}'。
 由于我们在Python调用雪球API前需要设置xq_a_token，但它大约只有20天的有效期，之前都是使用F12各种查找xq_a_token然后复制粘贴到我们的Python程序，
 比较繁琐，所以现在改用browser-cookie3工具库来自动化获取电脑浏览器已缓存的cookies（当然啦，浏览器的cookies肯定也会过期，我们只需要坚持每20天左右使用电脑浏览器访问任意一个雪球网站即可刷新电脑浏览器的cookies）。
+但是我发现网友经常遇到Chrome浏览器无法使用browser-cookie3的问题，是因为Chrome浏览器的版本太低导致的。所以建议大家使用Firefox为默认浏览器或者更新到最新版Chrome浏览器。
 
 注2：如遇到如下报错就代表chinese_calendar过期了：
 no available data for year 2023, only year between [2004, 2022] supported.
