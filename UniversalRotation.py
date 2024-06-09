@@ -107,7 +107,7 @@ def get_xq_a_token():
         if str_xq_a_token == ";" :
             print('get token, retrying ......')
             webbrowser.open("https://xueqiu.com/")
-            time.sleep(60)
+            time.sleep(1)
 
 @xlwings.func
 # 根据排名计算排名分(精确到小数点后2位)
@@ -445,6 +445,67 @@ def refresh_multifactor2_convertible_bond():
     sheet_dest.range('R2').value = data_fund_destination[:50]
     wb.save()
 
+@xlwings.func
+# 更新股票实时数据：价格、涨跌幅等
+def refresh_stock():
+    print("更新股票实时数据：价格、涨跌幅等")
+    xlwings.Book("UniversalRotation.xlsm").set_mock_caller()
+    wb = xlwings.Book.caller()
+    pandas.options.display.max_columns = None
+    pandas.options.display.max_rows = None
+    pysnowball.set_token(get_xq_a_token())
+
+    source_sheets = '股票实时数据'
+    sheet_fund = wb.sheets[source_sheets]
+    source_range = 'B2:E' + str(sheet_fund.used_range.last_cell.row)
+    print('数据表范围：' + source_range)
+    data_fund = pandas.DataFrame(sheet_fund.range(source_range).value,
+                                       columns=['股票代码','股票名称','当前价','涨跌幅'])
+    refresh_time = str(time.strftime("%Y-%m-%d__%H.%M.%S", time.localtime()))
+    sheet_fund.range('W3').value = '更新时间:' + refresh_time
+    log_file = open('log-' + source_sheets + refresh_time + '.txt', 'a+')
+
+    for i,fund_code in enumerate(data_fund['股票代码']):
+        detail = pandas.DataFrame(pysnowball.quote_detail(fund_code))
+        row1 = detail.loc["quote"][0]
+        print(str(row1))
+    #     data_fund.loc[i, '当前价'] = row1["current"]
+    #     data_fund.loc[i, '涨跌幅'] = row1["percent"] / 100 if row1["percent"] != None else '停牌'
+    #     data_fund.loc[i, '转股价'] = row1["conversion_price"]
+    #     data_fund.loc[i, '转股价值'] = row1["conversion_value"]
+    #     data_fund.loc[i, '溢价率'] = row1["premium_rate"] / 100 if row1["premium_rate"] != None else '停牌'
+    #     data_fund.loc[i, '双低值'] = row1["current"] + row1["premium_rate"]
+    #     data_fund.loc[i, '到期时间'] = str(time.strftime("%Y-%m-%d", time.localtime(row1["maturity_date"]/1000)))
+    #     data_fund.loc[i, '剩余年限'] = row1["remain_year"]
+    #     data_fund.loc[i, '剩余规模'] = row1["outstanding_amt"] / 100000000 if row1["outstanding_amt"] != None else 1
+    #     data_fund.loc[i, '成交金额'] = row1["amount"] / 10000 if row1["amount"] != None else 0
+    #     data_fund.loc[i, '换手率'] = (data_fund.loc[i, '成交金额'] / 10000 / row1["current"]) / (data_fund.loc[i, '剩余规模'] / 100)
+    #     data_fund.loc[i, '税前收益'] = row1["benefit_before_tax"] / 100 if row1["benefit_before_tax"] != None else '停牌'
+    #     data_fund.loc[i, '最高价'] = row1["high"]
+    #     data_fund.loc[i, '最低价'] = row1["low"]
+    #     if row1["high"] and row1["low"]:
+    #         data_fund.loc[i, '振幅'] = (row1["high"] - row1["low"]) / row1["low"]
+    #     else:
+    #         data_fund.loc[i, '振幅'] = '停牌'
+    #     log_str = 'No.' + format(str(i), "<6") + format(str(fund_code_str), "<10") \
+    #               + format(data_fund.loc[i, '转债名称'], "<15") \
+    #               + '当前价:' + format(str(row1["current"]), "<10") \
+    #               + '溢价率:' + format(str(row1["premium_rate"]), "<10") \
+    #               + '涨跌幅:'+ format(str(row1["percent"]), "<10")
+    #     print(log_str)
+    #     print(log_str, file=log_file)
+    #
+    # data_fund = data_fund.sort_values(by='溢价率')
+    # data_fund.reset_index(drop=True, inplace=True)
+    # data_fund.index += 1
+    # print(data_fund)
+    # print(data_fund, file=log_file)
+
+    log_file.close()
+    # 更新原Excel
+    sheet_fund.range('A1').value = data_fund
+    wb.save()
+
 def main_function():
     # date = datetime.datetime.now().date()
     # if not is_workday(date):
@@ -468,6 +529,9 @@ def main_function():
     refresh_multifactor2_convertible_bond()
 
     rotate_abroad_fund()
+
+    # 更新股票实时数据
+    refresh_stock()
 
 def main():
     main_function()
