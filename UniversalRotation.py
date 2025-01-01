@@ -10,10 +10,9 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 @xlwings.func
-def get_fund_net_asset_value_history(fund_code: str, pz: int = 750) -> pandas.DataFrame:
+def get_fund_net_asset_value_history(fund_code: str, pz: int = 200) -> pandas.DataFrame:
     '''
     根据基金代码和要获取的页码抓取基金净值信息
-
 
     Parameters
     ----------
@@ -41,10 +40,6 @@ def get_fund_net_asset_value_history(fund_code: str, pz: int = 750) -> pandas.Da
         'pageSize': f'{pz}',
         'startDate': '',
         'endDate': '',
-        '_': round(time.time()*1000),
-    }
-    EastmoneyCookie = {
-        'qgqp_b_id': "e1dc92ae3b0d76cc57233f6d6a1c5c61",
     }
     url = 'http://api.fund.eastmoney.com/f10/lsjz'
 
@@ -53,8 +48,7 @@ def get_fund_net_asset_value_history(fund_code: str, pz: int = 750) -> pandas.Da
     session1 = requests.session()
     # 设置连接活跃状态为False
     session1.keep_alive = False
-    response1 = session1.get(url, headers=EastmoneyFundHeaders, params=Eastmoneyparams, cookies=EastmoneyCookie,
-                             verify=False, stream=False, timeout=10)
+    response1 = session1.get(url, headers=EastmoneyFundHeaders, params=Eastmoneyparams, verify=False, stream=False, timeout=10)
     json_response = response1.json()
     response1.close()
     del(response1)
@@ -86,7 +80,7 @@ def get_fund_net_asset_value_history(fund_code: str, pz: int = 750) -> pandas.Da
 # 获取基金的市价、溢价率、成交量
 def get_fund_premium_rate_and_amount(fund_code: str):
     detail = pandas.DataFrame(pysnowball.quote_detail(fund_code))
-    row1=detail.loc["quote"][0]
+    row1=detail.loc["quote"].iloc[0]
     premium_rate1 = row1["premium_rate"]
     current_price = row1["current"]
     amount1 = row1["amount"]
@@ -279,7 +273,7 @@ def refresh_convertible_bond():
         elif str(fund_code).startswith('12'):
             fund_code_str = ('SZ' + str(fund_code))[0:8]
         detail = pandas.DataFrame(pysnowball.quote_detail(fund_code_str))
-        row1 = detail.loc["quote"][0]
+        row1 = detail.loc["quote"].iloc[0]
         data_fund.loc[i, '当前价'] = row1["current"]
         data_fund.loc[i, '涨跌幅'] = row1["percent"] / 100 if row1["percent"] != None else '停牌'
         data_fund.loc[i, '转股价'] = row1["conversion_price"]
@@ -467,7 +461,7 @@ def refresh_stock():
 
     for i,fund_code in enumerate(data_fund['股票代码']):
         detail = pandas.DataFrame(pysnowball.quote_detail(fund_code))
-        row1 = detail.loc["quote"][0]
+        row1 = detail.loc["quote"].iloc[0]
         print(str(row1))
     #     data_fund.loc[i, '当前价'] = row1["current"]
     #     data_fund.loc[i, '涨跌幅'] = row1["percent"] / 100 if row1["percent"] != None else '停牌'
