@@ -41,7 +41,7 @@ def get_fund_net_asset_value_history(fund_code: str, pz: int = 200) -> pandas.Da
         'startDate': '',
         'endDate': '',
     }
-    url = 'http://api.fund.eastmoney.com/f10/lsjz'
+    url = 'https://api.fund.eastmoney.com/f10/lsjz'
 
     #设置重连次数
     requests.adapters.DEFAULT_RETRIES = 10
