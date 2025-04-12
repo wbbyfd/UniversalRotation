@@ -9,19 +9,21 @@ from chinese_calendar import is_workday
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
+
 @xlwings.func
-def get_fund_net_asset_value_history(fund_code: str, pz: int = 200) -> pandas.DataFrame:
+def get_fund_net_asset_value_history(fund_code: str, total_pages: int = 38, page_sizes: int = 20) -> pandas.DataFrame:
     '''
-    根据基金代码和要获取的页码抓取基金净值信息
+    根据基金代码、获取的总页数和每页数据条数来抓取基金净值信息
 
     Parameters
     ----------
     fund_code : 6位基金代码
-    page : 页码 1 为最新页数据
+    total_pages : 总页数，用于确定需要抓取的页码范围
+    page_sizes: 每页获取的数据条数
 
     Return
     ------
-    DataFrame : 包含基金历史k线数据
+    DataFrame : 包含基金历史净值数据
     '''
     # 请求头
     EastmoneyFundHeaders = {
@@ -33,46 +35,49 @@ def get_fund_net_asset_value_history(fund_code: str, pz: int = 200) -> pandas.Da
         'Referer': 'http://fundf10.eastmoney.com/',
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36',
     }
-    # 请求参数
-    Eastmoneyparams = {
-        'fundCode': f'{fund_code}',
-        'pageIndex': '1',
-        'pageSize': f'{pz}',
-        'startDate': '',
-        'endDate': '',
-    }
-    url = 'https://api.fund.eastmoney.com/f10/lsjz'
 
-    #设置重连次数
+    url = 'https://api.fund.eastmoney.com/f10/lsjz'
+    all_rows = []
+    columns = ['日期', '单位净值', '累计净值', '涨跌幅']
+
+    # 设置重连次数
     requests.adapters.DEFAULT_RETRIES = 10
     session1 = requests.session()
-    # 设置连接活跃状态为False
     session1.keep_alive = False
-    response1 = session1.get(url, headers=EastmoneyFundHeaders, params=Eastmoneyparams, verify=False, stream=False, timeout=10)
-    json_response = response1.json()
-    response1.close()
-    del(response1)
 
-    rows = []
-    columns = ['日期', '单位净值', '累计净值', '涨跌幅']
-    if json_response is None:
-        return pandas.DataFrame(rows, columns=columns)
-    datas = json_response['Data']['LSJZList']
-    if len(datas) == 0:
-        return pandas.DataFrame(rows, columns=columns)
-    for stock in datas:
-        rows.append({
-            '日期': stock['FSRQ'],
-            '单位净值': stock['DWJZ'],
-            '累计净值': stock['LJJZ'],
-            '涨跌幅': stock['JZZZL']
-        })
+    for page in range(1, total_pages + 1):
+        Eastmoneyparams = {
+            'fundCode': fund_code,
+            'pageIndex': str(page),
+            'pageSize': f'{page_sizes}',
+            'startDate': '',
+            'endDate': '',
+        }
 
-    df = pandas.DataFrame(rows)
+        response1 = session1.get(url, headers=EastmoneyFundHeaders, params=Eastmoneyparams, verify=False, stream=False,
+                                 timeout=10)
+        json_response = response1.json()
+        response1.close()
+        del(response1)
+
+        if json_response is None:
+            return pandas.DataFrame(all_rows, columns=columns)
+        datas = json_response.get('Data').get('LSJZList')
+
+        for stock in datas:
+            all_rows.append({
+                '日期': stock['FSRQ'],
+                '单位净值': stock['DWJZ'],
+                '累计净值': stock['LJJZ'],
+                '涨跌幅': stock['JZZZL']
+            })
+
+    df = pandas.DataFrame(all_rows)
     df['日期'] = pandas.to_datetime(df['日期'], errors='coerce')
     df['单位净值'] = pandas.to_numeric(df['单位净值'], errors='coerce')
     df['累计净值'] = pandas.to_numeric(df['累计净值'], errors='coerce')
     df['涨跌幅'] = pandas.to_numeric(df['涨跌幅'], errors='coerce')
+
     return df
 
 
