@@ -11,7 +11,7 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
 @xlwings.func
-def get_fund_net_asset_value_history(fund_code: str, total_pages: int = 38, page_sizes: int = 20) -> pandas.DataFrame:
+def get_fund_net_asset_value_history(fund_code: str, total_pages: int = 38, page_size: int = 20) -> pandas.DataFrame:
     '''
     根据基金代码、获取的总页数和每页数据条数来抓取基金净值信息
 
@@ -19,7 +19,7 @@ def get_fund_net_asset_value_history(fund_code: str, total_pages: int = 38, page
     ----------
     fund_code : 6位基金代码
     total_pages : 总页数，用于确定需要抓取的页码范围
-    page_sizes: 每页获取的数据条数
+    page_size: 每页获取的数据条数
 
     Return
     ------
@@ -45,11 +45,11 @@ def get_fund_net_asset_value_history(fund_code: str, total_pages: int = 38, page
     session1 = requests.session()
     session1.keep_alive = False
 
-    for page in range(1, total_pages + 1):
+    for page_index in range(1, total_pages + 1):
         Eastmoneyparams = {
             'fundCode': fund_code,
-            'pageIndex': str(page),
-            'pageSize': f'{page_sizes}',
+            'pageIndex': str(page_index),
+            'pageSize': f'{page_size}',
             'startDate': '',
             'endDate': '',
         }
